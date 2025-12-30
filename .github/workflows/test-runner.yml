@@ -1,15 +1,26 @@
-name: Test Run
+name: Verify Custom Infrastructure
 on: push
 
 jobs:
-  test-connection:
+  infrastructure-test:
     runs-on: self-hosted
     steps:
-      - name: Say Hello
-        run: echo "Hello World, this is CentOS Data Center."
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-      - name: Check OS
-        run: cat /etc/os-release
+      - name: 1. Identify Runner OS
+        run: |
+          echo "--------------------------------"
+          echo "REPORTING FROM CUSTOM AGENT:"
+          cat /etc/os-release | grep PRETTY_NAME
+          echo "--------------------------------"
 
-      - name: Check Docker Access
-        run: docker ps
+      - name: 2. Test Docker Socket (Sibling Test)
+        run: |
+          echo "Attempting to talk to Host Docker Engine..."
+          docker version
+
+      - name: 3. Build & Run App (End-to-End)
+        run: |
+          docker build -t final-test-app:v1 .
+          docker run --rm final-test-app:v1
