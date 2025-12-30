@@ -18,9 +18,9 @@ jobs:
       - name: 2. Test Docker Socket (Sibling Test)
         run: |
           echo "Attempting to talk to Host Docker Engine..."
-          docker version
+          sudo docker version
 
       - name: 3. Build & Run App (End-to-End)
         run: |
-          docker build -t final-test-app:v1 .
-          docker run --rm final-test-app:v1
+          sudo docker build -t final-test-app:v1 .
+          sudo docker run --rm final-test-app:v1
