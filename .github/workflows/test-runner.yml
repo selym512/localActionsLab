@@ -1,26 +1,23 @@
-name: Verify Custom Infrastructure
-on: push
+name: Gatekeeper Pipeline
+on: [push, pull_request]
 
 jobs:
-  infrastructure-test:
+  validate-code:
     runs-on: self-hosted
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: 1. Identify Runner OS
-        run: |
-          echo "--------------------------------"
-          echo "REPORTING FROM CUSTOM AGENT:"
-          cat /etc/os-release | grep PRETTY_NAME
-          echo "--------------------------------"
+      - name: Build Container
+        run: sudo docker build -t medical-app:latest .
 
-      - name: 2. Test Docker Socket (Sibling Test)
+      - name: Run Unit Tests
         run: |
-          echo "Attempting to talk to Host Docker Engine..."
-          sudo docker version
+          echo "Running PyTest..."
+          # Override the default command to run 'pytest' instead of 'python main.py'
+          sudo docker run --rm medical-app:latest pytest
 
-      - name: 3. Build & Run App (End-to-End)
+      - name: Run App (Only if tests pass)
         run: |
-          sudo docker build -t final-test-app:v1 .
-          sudo docker run --rm final-test-app:v1
+          echo "Tests passed! Starting application..."
+          sudo docker run --rm medical-app:latest python main.py
