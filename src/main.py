@@ -22,7 +22,8 @@ def save_to_db(score):
         account=account,
         warehouse="COMPUTE_WH",
         database="CICD_DEMO",
-        schema="PUBLIC"
+        schema="PUBLIC",
+        role="SYSADMIN"
     )
     
     # 3. Insert Data
