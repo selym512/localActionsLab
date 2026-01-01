@@ -1,18 +1,49 @@
 import sys
+import os
+import snowflake.connector
 
 def calculate_patient_risk(age, heart_rate):
-    # Simple logic: Risk = Age + (Heart Rate / 2)
     if heart_rate < 0:
         raise ValueError("Heart rate cannot be negative")
-    
-    # RISK CALCULATOR LOGIC
     risk_score = age + (heart_rate / 2)
     return risk_score
 
+def save_to_db(score):
+    # 1. Get credentials from Environment Variables (injected by Docker)
+    user = os.getenv("SNOWFLAKE_USER")
+    password = os.getenv("SNOWFLAKE_PASSWORD")
+    account = os.getenv("SNOWFLAKE_ACCOUNT")
+    
+    # 2. Connect to Snowflake
+    print("Connecting to Snowflake...")
+    conn = snowflake.connector.connect(
+        user=user,
+        password=password,
+        account=account,
+        warehouse="COMPUTE_WH",
+        database="CICD_DEMO",
+        schema="PUBLIC"
+    )
+    
+    # 3. Insert Data
+    cursor = conn.cursor()
+    query = f"INSERT INTO PATIENT_RISKS (PATIENT_ID, RISK_SCORE) VALUES (101, {score})"
+    cursor.execute(query)
+    print(f"SUCCESS: Saved Risk Score {score} to the Cloud!")
+    conn.close()
+
 if __name__ == "__main__":
-    # This block prevents the code below from running when we import the file for testing
     print("----------------------------------------")
     print("APP STARTING: Risk Calculator")
-    score = calculate_patient_risk(50, 80)
-    print(f"Test Patient Score: {score}")
+    
+    # 1. Calculate
+    final_score = calculate_patient_risk(50, 80)
+    print(f"Calculated Score: {final_score}")
+    
+    # 2. Save (Only if we have the password)
+    if os.getenv("SNOWFLAKE_PASSWORD"):
+        save_to_db(final_score)
+    else:
+        print("SKIPPING DB SAVE: No credentials found (Running locally?)")
+        
     print("----------------------------------------")
