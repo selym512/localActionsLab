@@ -17,7 +17,11 @@ jobs:
           # Override the default command to run 'pytest' instead of 'python main.py'
           sudo docker run --rm medical-app:latest pytest
 
-      - name: Run App (Only if tests pass)
+      - name: Run App (Deploy to Prod)
         run: |
-          echo "Tests passed! Starting application..."
-          sudo docker run --rm medical-app:latest python main.py
+          echo "Tests passed! Deploying to Snowflake..."
+          sudo docker run --rm \
+            -e SNOWFLAKE_USER='${{ secrets.SNOWFLAKE_USER }}' \
+            -e SNOWFLAKE_PASSWORD='${{ secrets.SNOWFLAKE_PASSWORD }}' \
+            -e SNOWFLAKE_ACCOUNT='${{ secrets.SNOWFLAKE_ACCOUNT }}' \
+            medical-app:latest python main.py
