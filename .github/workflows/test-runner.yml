@@ -6,8 +6,13 @@ on:
     branches : ["main"]
 
 jobs:
-  validate-code:
+  validate-and-deploy:
     runs-on: self-hosted
+    # Define the Dynamic DB Name globally for this job
+    env:
+      # Creates a name like "TEST_DB_847392"
+      TEMP_DB_NAME: "TEST_DB_${{ github.run_id }}" 
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -16,16 +21,38 @@ jobs:
         run: sudo docker build -t medical-app:latest .
 
       - name: Run Unit Tests
-        run: |
-          echo "Running PyTest..."
-          # Override the default command to run 'pytest' instead of 'python main.py'
-          sudo docker run --rm medical-app:latest pytest
+        run: sudo docker run --rm medical-app:latest pytest tests/
 
-      - name: Run App (Deploy to Prod)
+      # STEP A: Create the Clone (Ops Logic)
+      - name: Setup Zero-Copy Clone
         run: |
-          echo "Tests passed! Deploying to Snowflake..."
+          echo "Creating temporary DB: $TEMP_DB_NAME"
           sudo docker run --rm \
             -e SNOWFLAKE_USER='${{ secrets.SNOWFLAKE_USER }}' \
             -e SNOWFLAKE_PASSWORD='${{ secrets.SNOWFLAKE_PASSWORD }}' \
             -e SNOWFLAKE_ACCOUNT='${{ secrets.SNOWFLAKE_ACCOUNT }}' \
-            medical-app:latest python main.py
+            medical-app:latest \
+            python ops_db_manager.py create "$TEMP_DB_NAME"
+
+      # STEP B: Run App against the Clone (Dev Logic)
+      - name: Run App (Against Clone)
+        run: |
+          echo "Running app against: $TEMP_DB_NAME"
+          sudo docker run --rm \
+            -e SNOWFLAKE_USER='${{ secrets.SNOWFLAKE_USER }}' \
+            -e SNOWFLAKE_PASSWORD='${{ secrets.SNOWFLAKE_PASSWORD }}' \
+            -e SNOWFLAKE_ACCOUNT='${{ secrets.SNOWFLAKE_ACCOUNT }}' \
+            -e SNOWFLAKE_DATABASE="$TEMP_DB_NAME" \
+            medical-app:latest python src/main.py
+
+      # STEP C: Teardown (Cleanup)
+      - name: Teardown Clone
+        if: always() # Run even if the app crashes!
+        run: |
+          echo "Dropping DB: $TEMP_DB_NAME"
+          sudo docker run --rm \
+            -e SNOWFLAKE_USER='${{ secrets.SNOWFLAKE_USER }}' \
+            -e SNOWFLAKE_PASSWORD='${{ secrets.SNOWFLAKE_PASSWORD }}' \
+            -e SNOWFLAKE_ACCOUNT='${{ secrets.SNOWFLAKE_ACCOUNT }}' \
+            medical-app:latest \
+            python ops_db_manager.py drop "$TEMP_DB_NAME"
