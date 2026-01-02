@@ -21,7 +21,7 @@ jobs:
         run: sudo docker build -t medical-app:latest .
 
       - name: Run Unit Tests
-        run: sudo docker run --rm medical-app:latest pytest
+        run: sudo docker run --rm medical-app:latest pytest tests/
 
       # STEP A: Create the Clone (Ops Logic)
       - name: Setup Zero-Copy Clone
@@ -43,7 +43,7 @@ jobs:
             -e SNOWFLAKE_PASSWORD='${{ secrets.SNOWFLAKE_PASSWORD }}' \
             -e SNOWFLAKE_ACCOUNT='${{ secrets.SNOWFLAKE_ACCOUNT }}' \
             -e SNOWFLAKE_DATABASE="$TEMP_DB_NAME" \
-            medical-app:latest python main.py
+            medical-app:latest python src/main.py
 
       # STEP C: Teardown (Cleanup)
       - name: Teardown Clone

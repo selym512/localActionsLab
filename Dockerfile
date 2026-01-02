@@ -8,6 +8,8 @@ RUN pip install pytest snowflake-connector-python
 # Copy ALL files
 COPY . .
 
+ENV PYTHONPATH=/app/src
+
 # Default command
 CMD ["python", "main.py"]
 
