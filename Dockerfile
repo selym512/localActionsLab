@@ -5,8 +5,10 @@ WORKDIR /app
 # Install the testing library
 RUN pip install pytest snowflake-connector-python
 
-# Copy ALL files (source code AND tests)
-COPY src/ .
+# Copy ALL files
+COPY . .
 
-# Default command (still runs the app)
+# Default command
 CMD ["python", "main.py"]
+
+

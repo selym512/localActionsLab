@@ -13,6 +13,7 @@ def save_to_db(score):
     user = os.getenv("SNOWFLAKE_USER")
     password = os.getenv("SNOWFLAKE_PASSWORD")
     account = os.getenv("SNOWFLAKE_ACCOUNT")
+    target_db = os.getenv("SNOWFLAKE_DATABASE", "CICD_DEMO")
     
     # 2. Connect to Snowflake
     print("Connecting to Snowflake...")
@@ -21,7 +22,7 @@ def save_to_db(score):
         password=password,
         account=account,
         warehouse="COMPUTE_WH",
-        database="CICD_DEMO",
+        database=target_db,
         schema="PUBLIC",
         role="SYSADMIN"
     )
