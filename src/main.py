@@ -29,7 +29,7 @@ def save_to_db(score):
     
     # 3. Insert Data
     cursor = conn.cursor()
-    query = f"INSERT INTO CICD_DEMO.PUBLIC.PATIENT_RISKS (PATIENT_ID, RISK_SCORE) VALUES (101, {score})"
+    query = f"INSERT INTO {target_db}.PUBLIC.PATIENT_RISKS (PATIENT_ID, RISK_SCORE) VALUES (101, {score})"
     cursor.execute(query)
     print(f"SUCCESS: Saved Risk Score {score} to the Cloud!")
     conn.close()
